@@ -1,8 +1,12 @@
 // ignore_for_file: sort_child_properties_last, must_call_super, deprecated_member_use
 
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:instagram_clone/resources/auth_methods.dart';
 import 'package:instagram_clone/utils/colors.dart';
+import 'package:instagram_clone/utils/utils.dart';
 import 'package:instagram_clone/widgets/text_field_input.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -17,6 +21,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
+  Uint8List? _image;
 
   @override
   void dispose() {
@@ -26,10 +31,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _usernameController.dispose();
   }
 
+  void selectImage() async {
+    Uint8List im = await pickImage(ImageSource.gallery);
+    setState(() {
+      _image = im;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: Container(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           width: double.infinity,
@@ -43,7 +56,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 height: 64,
               ),
               const SizedBox(
-                height: 64,
+                height: 24,
+              ),
+              Stack(
+                children: [
+                  _image != null
+                      ? CircleAvatar(
+                          radius: 64,
+                          backgroundImage: MemoryImage(_image!),
+                        )
+                      : const CircleAvatar(
+                          radius: 64,
+                          backgroundImage: NetworkImage(
+                              "https://th.bing.com/th/id/OIP.roQHQEuNf8SdJJ7wS3RxtgHaHa?rs=1&pid=ImgDetMain"),
+                        ),
+                  Positioned(
+                    child: IconButton(
+                      onPressed: selectImage,
+                      icon: const Icon(Icons.add_a_photo),
+                    ),
+                    bottom: -10,
+                    left: 78,
+                  )
+                ],
+              ),
+              const SizedBox(
+                height: 24,
               ),
               //text field for username
               TextFieldInput(
@@ -76,6 +114,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 24),
               //login button
               InkWell(
+                onTap: () async {
+                  String res = await AuthMethods().SignUpUser(
+                    email: _emailController.text,
+                    password: _passwordController.text,
+                    username: _usernameController.text,
+                    bio: _bioController.text,
+                    file: _image!,
+                  );
+                  print(res);
+                },
                 child: Container(
                   child: const Text("Sign Up"),
                   width: double.infinity,
@@ -103,7 +151,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   GestureDetector(
                     child: Container(
-                      child: const Text("Login", style: TextStyle(fontWeight: FontWeight.bold),),
+                      child: const Text(
+                        "Login",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
                   ),
